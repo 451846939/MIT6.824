@@ -150,6 +150,7 @@ func (cfg *config) checkLogs(i int, m ApplyMsg) (string, bool) {
 	}
 	_, prevok := cfg.logs[i][m.CommandIndex-1]
 	cfg.logs[i][m.CommandIndex] = v
+	//log.Printf("checkLogs cfg.log=%v m.CommandIndex=%v", cfg.logs, m.CommandIndex)
 	if m.CommandIndex > cfg.maxIndex {
 		cfg.maxIndex = m.CommandIndex
 	}
@@ -163,6 +164,7 @@ func (cfg *config) applier(i int, applyCh chan ApplyMsg) {
 		if m.CommandValid == false {
 			// ignore other types of ApplyMsg
 		} else {
+			//time.Sleep(2 * time.Second)
 			cfg.mu.Lock()
 			err_msg, prevok := cfg.checkLogs(i, m)
 			cfg.mu.Unlock()
@@ -170,7 +172,7 @@ func (cfg *config) applier(i int, applyCh chan ApplyMsg) {
 				err_msg = fmt.Sprintf("server %v apply out of order %v", i, m.CommandIndex)
 			}
 			if err_msg != "" {
-				log.Fatalf("apply error: %v", err_msg)
+				log.Fatalf("applier apply error: %v", err_msg)
 				cfg.applyErr[i] = err_msg
 				// keep reading after error so that Raft doesn't block
 				// holding locks...
@@ -259,7 +261,7 @@ func (cfg *config) applierSnap(i int, applyCh chan ApplyMsg) {
 			// Ignore other types of ApplyMsg.
 		}
 		if err_msg != "" {
-			log.Fatalf("apply error: %v", err_msg)
+			log.Fatalf("applierSnap apply error: %v", err_msg)
 			cfg.applyErr[i] = err_msg
 			// keep reading after error so that Raft doesn't block
 			// holding locks...
@@ -504,7 +506,7 @@ func (cfg *config) nCommitted(index int) (int, interface{}) {
 		cfg.mu.Lock()
 		cmd1, ok := cfg.logs[i][index]
 		cfg.mu.Unlock()
-
+		//log.Printf("cfg.log=%v ,index=%v ,cmd1=%v  cmd=%v", cfg.logs, index, cmd1, cmd)
 		if ok {
 			if count > 0 && cmd != cmd1 {
 				cfg.t.Fatalf("committed values do not match: index %v, %v, %v",
@@ -589,6 +591,7 @@ func (cfg *config) one(cmd interface{}, expectedServers int, retry bool) int {
 			t1 := time.Now()
 			for time.Since(t1).Seconds() < 2 {
 				nd, cmd1 := cfg.nCommitted(index)
+				//log.Printf("nd=%v expectedServers=%v cmd1=%v cmd=%v ", nd, expectedServers, cmd1, cmd)
 				if nd > 0 && nd >= expectedServers {
 					// committed
 					if cmd1 == cmd {

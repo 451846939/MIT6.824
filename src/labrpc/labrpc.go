@@ -82,6 +82,8 @@ type ClientEnd struct {
 // the return value indicates success; false means that
 // no reply was received from the server.
 func (e *ClientEnd) Call(svcMeth string, args interface{}, reply interface{}) bool {
+	//startTime := time.Now()
+	//defer log.Printf("ClientEnd.Call() took %v svcMeth=%v args=%v", time.Since(startTime), svcMeth, args)
 	req := reqMsg{}
 	req.endname = e.endname
 	req.svcMeth = svcMeth
